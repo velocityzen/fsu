@@ -3,7 +3,7 @@
 	"version": "0.1.0",
 	"description": "Unique file name with streams support",
 	"license" : "MIT",
-	"keywords": ["file", "fs", "unique", "counter", "filename"],
+	"keywords": ["file", "fs", "unique", "counter", "filename", "stream"],
 	"author": "Alexey Novikov (http://2dubs.com)",
 	"private": false,
 	"engines": {
