@@ -1,6 +1,6 @@
 {
 	"name": "fsu",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"description": "Unique file name with streams support",
 	"license" : "MIT",
 	"keywords": ["file", "fs", "unique", "counter", "filename", "stream"],

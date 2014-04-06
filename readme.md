@@ -6,7 +6,18 @@ Unique filenames with streams support
 ##Instalation
 `npm install fsu`
 
-## writeFileUnique(filename, data, [options], callback)
+## openUnique(path, [mode], callback)
+Same as [fs.open](http://nodejs.org/api/fs.html#fs_fs_open_path_flags_mode_callback) but open for writing and creates unique filename.
+
+```js
+var fsu = require('fsu');
+
+fsu.openUnique("text{_###}.txt", function(err, fd) {
+    //now we can use file descriptor as usual
+});
+```
+
+## writeFileUnique(path, data, [options], callback)
 Same as [fs.writeFile](http://nodejs.org/api/fs.html#fs_fs_writefile_filename_data_options_callback) but creates unique filename.
 
 ```js
@@ -28,7 +39,7 @@ var stream = fsu.createUniqueWriteStream("text{_###}.txt");
 ## pattern
 You must use `{#}` pattern in filename and path. All `#` characters will be change with counter for existing files. Number of `#` means padding for unique counter
 
-If we run first example several times filenames will be
+If we run second example several times filenames will be
 ```
 text.txt
 text_001.txt

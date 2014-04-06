@@ -30,16 +30,30 @@ var writeAll = function(fd, buffer, offset, length, position, cb) {
 	});
 };
 
-var openUnique = function(tryNum, head, padLeft, pad, padRight, tail, mode, cb) {
+var openUniqueHandler = function(tryNum, head, padLeft, pad, padRight, tail, mode, cb) {
 	var file = tryNum ? (head + padLeft + padNum(tryNum, pad) + padRight + tail) : (head + tail);
 
 	fs.open(file, "wx", mode || 438, function(err, fd) {
 		if(err && err.errno === 47) {
-			openUnique(++tryNum, head, padLeft, pad, padRight, tail, mode, cb);
+			openUniqueHandler(++tryNum, head, padLeft, pad, padRight, tail, mode, cb);
 		} else {
 			cb(err, fd);
 		}
 	});
+};
+
+var openUnique = function(filename, mode, cb) {
+	if(cb === undefined) {
+		cb = mode;
+		mode = 438;
+	}
+
+	filename = rx.exec(filename);
+	if(!filename) {
+		cb(new Error("Can't find a counter pattern in filename"));
+	}
+
+	openUniqueHandler(0, filename[1], filename[2], filename[3].length, filename[4], filename[5], mode, cb);
 };
 
 var writeFileUnique = function(filename, data, options, cb) {
@@ -48,12 +62,7 @@ var writeFileUnique = function(filename, data, options, cb) {
 		options = { encoding: 'utf8', mode: 438 /*=0666*/ };
 	}
 
-	filename = rx.exec(filename);
-	if(!filename) {
-		cb(new Error("Can't find a counter pattern in filename"));
-	}
-
-	openUnique(0, filename[1], filename[2], filename[3].length, filename[4], filename[5], options.mode, function(err, fd) {
+	openUnique(filename, options.mode, function(err, fd) {
 		var buffer = Buffer.isBuffer(data) ? data : new Buffer('' + data, options.encoding || 'utf8');
 		writeAll(fd, buffer, 0, buffer.length, 0, cb);
 	});
@@ -66,13 +75,7 @@ var UniqueWriteStream = function(path, options) {
 util.inherits(UniqueWriteStream, WriteStream);
 
 UniqueWriteStream.prototype.open = function() {
-	var filename = rx.exec(this.path);
-	if(!filename) {
-		this.destroy();
-		this.emit('error', new Error("Can't find a counter pattern in filename"));
-	}
-
-	openUnique(0, filename[1], filename[2], filename[3].length, filename[4], filename[5], this.mode, function(err, fd) {
+	openUnique(this.path, this.mode, function(err, fd) {
 		if (err) {
 			this.destroy();
 			this.emit('error', err);
@@ -89,6 +92,7 @@ var createUniqueWriteStream = function(path, options) {
 };
 
 module.exports = {
+	openUnique: openUnique,
 	writeFileUnique: writeFileUnique,
 	createUniqueWriteStream: createUniqueWriteStream
 };
