@@ -1,9 +1,12 @@
 "use strict";
 var fs = require("fs");
+var path = require("path");
 var inherits = require("util").inherits;
 var WriteStream = fs.WriteStream;
 
-var rx = /(.+)\{([^#\{\}]*)(#+)([^#\{\}]*)\}(.+)/;
+var rx = /(.*)\{([^#\{\}]*)(#+)([^#\{\}]*)\}(.*)/;
+
+var defaultMode = parseInt("0777", 8) & (~process.umask());
 
 var padNum = function(n, width, z) {
 	z = z || "0";
@@ -30,36 +33,77 @@ var writeAll = function(fd, buffer, offset, length, position, cb) {
 	});
 };
 
-var openUniqueHandler = function(tryNum, head, padLeft, pad, padRight, tail, mode, cb) {
-	var file = tryNum ? (head + padLeft + padNum(tryNum, pad) + padRight + tail) : (head + tail);
+var mkdirp = function(p, mode, cb) {
+	fs.mkdir(p, mode, function (err) {
+		if(!err) {
+			cb();
+		} else if(err.code === "ENOENT") {
+			mkdirp(path.dirname(p), mode, function(er) {
+				if(er) {
+					cb(er);
+				} else {
+					mkdirp(p, mode, cb);
+				}
+			});
+		} else {
+			cb(err);
+		}
+	});
+};
 
-	fs.open(file, "wx", mode || 438, function(err, fd) {
+var openUniqueHandler = function(tryNum, fileParts, mode, cb, force) {
+	var file = tryNum ? (fileParts.head + fileParts.padLeft + padNum(tryNum, fileParts.pad) + fileParts.padRight + fileParts.tail) : (fileParts.head + fileParts.tail);
+
+	fs.open(path.join(fileParts.path, file), "wx", mode || defaultMode, function(err, fd) {
 		if(err && err.code === "EEXIST") {
-			openUniqueHandler(++tryNum, head, padLeft, pad, padRight, tail, mode, cb);
+			openUniqueHandler(++tryNum, fileParts, mode, cb);
+		} else if(err && err.code === "ENOENT" && force) {
+			mkdirp(fileParts.path, mode, function(er) {
+				if(er) {
+					cb(er);
+				} else {
+					openUniqueHandler(tryNum, fileParts, mode, cb);
+				}
+			});
 		} else {
 			cb(err, fd);
 		}
 	});
 };
 
-var openUnique = function(filename, mode, cb) {
+var openUnique = function(filename, mode, cb, force) {
 	if(cb === undefined) {
 		cb = mode;
-		mode = 438;
+		mode = defaultMode;
 	}
 
-	filename = rx.exec(filename);
-	if(!filename) {
+	filename = path.resolve(filename);
+	var filePath = path.dirname(filename);
+	filename = path.basename(filename);
+
+	var fileParts = rx.exec(filename);
+	if(!fileParts) {
 		cb(new Error("Can't find a counter pattern in filename"));
 	}
 
-	openUniqueHandler(0, filename[1], filename[2], filename[3].length, filename[4], filename[5], mode, cb);
+	openUniqueHandler(0, {
+			path: filePath,
+			head: fileParts[1],
+			padLeft: fileParts[2],
+			pad: fileParts[3].length,
+			padRight: fileParts[4],
+			tail: fileParts[5]
+		},
+		mode,
+		cb,
+		force
+	);
 };
 
 var writeFileUnique = function(filename, data, options, cb) {
 	if(cb === undefined) {
 		cb = options;
-		options = { encoding: "utf8", mode: 438 /*=0666*/ };
+		options = { encoding: "utf8", mode: defaultMode };
 	}
 
 	openUnique(filename, options.mode, function(err, fd) {
@@ -69,30 +113,36 @@ var writeFileUnique = function(filename, data, options, cb) {
 			var buffer = Buffer.isBuffer(data) ? data : new Buffer("" + data, options.encoding || "utf8");
 			writeAll(fd, buffer, 0, buffer.length, 0, cb);
 		}
-	});
+	}, options.force);
 };
 
 // stream
-var WriteStreamUnique = function(path, options) {
-	WriteStream.call(this, path, options);
+var WriteStreamUnique = function(file, options) {
+	if(options && options.force) {
+		this.forcePath = options.force;
+		delete options.force;
+	}
+	WriteStream.call(this, file, options);
 };
 inherits(WriteStreamUnique, WriteStream);
 
 WriteStreamUnique.prototype.open = function() {
+	var self = this;
+
 	openUnique(this.path, this.mode, function(err, fd) {
 		if (err) {
-			this.destroy();
-			this.emit("error", err);
+			self.destroy();
+			self.emit("error", err);
 			return;
 		}
 
-		this.fd = fd;
-		this.emit("open", fd);
-	}.bind(this));
+		self.fd = fd;
+		self.emit("open", fd);
+	}, this.forcePath);
 };
 
-var createWriteStreamUnique = function(path, options) {
-	return new WriteStreamUnique(path, options);
+var createWriteStreamUnique = function(file, options) {
+	return new WriteStreamUnique(file, options);
 };
 
 module.exports = {

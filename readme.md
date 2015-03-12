@@ -36,6 +36,9 @@ var fsu = require('fsu');
 var stream = fsu.createWriteStreamUnique("text{_###}.txt");
 ```
 
+## force path creation
+Add `force = true` to options, and it will recursively create directories if they are not exist.
+
 ## pattern
 You must use `{#}` pattern in filename and path. All `#` characters will be change with counter for existing files. Number of `#` means padding for unique counter
 
