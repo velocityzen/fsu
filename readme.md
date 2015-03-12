@@ -28,12 +28,12 @@ fsu.writeFileUnique("text{_###}.txt", "test", function(err) {
 });
 ```
 
-## createUniqueWriteStream(path, [options])
-Same as [fs.createReadStream](http://nodejs.org/api/fs.html#fs_fs_createreadstream_path_options) but returns writable stream for unique file.
+## createWriteStreamUnique(path, [options])
+Same as [fs.createWriteStream](https://nodejs.org/api/fs.html#fs_fs_createwritestream_path_options) but returns writable stream for unique file.
 
 ```js
 var fsu = require('fsu');
-var stream = fsu.createUniqueWriteStream("text{_###}.txt");
+var stream = fsu.createWriteStreamUnique("text{_###}.txt");
 ```
 
 ## pattern
