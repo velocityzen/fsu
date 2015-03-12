@@ -6,7 +6,8 @@ var WriteStream = fs.WriteStream;
 
 var rx = /(.*)\{([^#\{\}]*)(#+)([^#\{\}]*)\}(.*)/;
 
-var defaultMode = parseInt("0777", 8) & (~process.umask());
+var defaultDirMode = parseInt("0777", 8) & (~process.umask());
+var defaultFileMode = parseInt("0666", 8) & (~process.umask());
 
 var padNum = function(n, width, z) {
 	z = z || "0";
@@ -51,18 +52,18 @@ var mkdirp = function(p, mode, cb) {
 	});
 };
 
-var openUniqueHandler = function(tryNum, fileParts, mode, force, simple, cb) {
-	var file = simple ? fileParts.tail : tryNum ? (fileParts.head + fileParts.padLeft + padNum(tryNum, fileParts.pad) + fileParts.padRight + fileParts.tail) : (fileParts.head + fileParts.tail);
+var openUniqueHandler = function(tryNum, fileParts, options, cb) {
+	var file = options.simple ? fileParts.tail : tryNum ? (fileParts.head + fileParts.padLeft + padNum(tryNum, fileParts.pad) + fileParts.padRight + fileParts.tail) : (fileParts.head + fileParts.tail);
 
-	fs.open(path.join(fileParts.path, file), "wx", mode || defaultMode, function(err, fd) {
-		if(err && err.code === "EEXIST" && !simple) {
-			openUniqueHandler(++tryNum, fileParts, mode, force, simple, cb);
-		} else if(err && err.code === "ENOENT" && force) {
-			mkdirp(fileParts.path, mode, function(er) {
+	fs.open(path.join(fileParts.path, file), options.flags || "w", options.mode || defaultFileMode, function(err, fd) {
+		if(err && err.code === "EEXIST" && !options.simple) {
+			openUniqueHandler(++tryNum, fileParts, options, cb);
+		} else if(err && err.code === "ENOENT" && options.force) {
+			mkdirp(fileParts.path, defaultDirMode, function(er) {
 				if(er) {
 					cb(er);
 				} else {
-					openUniqueHandler(tryNum, fileParts, mode, force, simple, cb);
+					openUniqueHandler(tryNum, fileParts, options, cb);
 				}
 			});
 		} else {
@@ -71,12 +72,7 @@ var openUniqueHandler = function(tryNum, fileParts, mode, force, simple, cb) {
 	});
 };
 
-var openUnique = function(file, mode, cb, force) {
-	if(cb === undefined) {
-		cb = mode;
-		mode = defaultMode;
-	}
-
+var openUnique = function(file, options, cb) {
 	file = path.resolve(file);
 	var filePath = path.dirname(file),
 		fileName = path.basename(file);
@@ -84,11 +80,14 @@ var openUnique = function(file, mode, cb, force) {
 	var fileParts = rx.exec(fileName);
 
 	if(!fileParts) {
+		options.simple = true;
 		openUniqueHandler(0, {
 			path: filePath,
 			tail: fileName
-		}, mode, force, true, cb);
+		}, options, cb);
 	} else {
+		options.simple = false;
+		options.flags = "wx";
 		openUniqueHandler(0, {
 			path: filePath,
 			head: fileParts[1] || "",
@@ -96,30 +95,30 @@ var openUnique = function(file, mode, cb, force) {
 			pad: fileParts[3].length,
 			padRight: fileParts[4],
 			tail: fileParts[5] || ""
-		}, mode, force, false, cb);
+		}, options, cb);
 	}
 };
 
 var writeFileUnique = function(filename, data, options, cb) {
 	if(cb === undefined) {
 		cb = options;
-		options = { encoding: "utf8", mode: defaultMode };
+		options = { encoding: "utf8", mode: defaultFileMode, flags: "w" };
 	}
 
-	openUnique(filename, options.mode, function(err, fd) {
+	openUnique(filename, options, function(err, fd) {
 		if(err) {
 			cb(err);
 		} else {
 			var buffer = Buffer.isBuffer(data) ? data : new Buffer("" + data, options.encoding || "utf8");
 			writeAll(fd, buffer, 0, buffer.length, 0, cb);
 		}
-	}, options.force);
+	});
 };
 
 // stream
 var WriteStreamUnique = function(file, options) {
 	if(options && options.force) {
-		this.forcePath = options.force;
+		this.force = options.force;
 		delete options.force;
 	}
 	WriteStream.call(this, file, options);
@@ -129,7 +128,11 @@ inherits(WriteStreamUnique, WriteStream);
 WriteStreamUnique.prototype.open = function() {
 	var self = this;
 
-	openUnique(this.path, this.mode, function(err, fd) {
+	openUnique(this.path, {
+		flags: this.flags,
+		mode: this.mode,
+		force: this.force
+	}, function(err, fd) {
 		if (err) {
 			self.destroy();
 			self.emit("error", err);
@@ -138,7 +141,7 @@ WriteStreamUnique.prototype.open = function() {
 
 		self.fd = fd;
 		self.emit("open", fd);
-	}, this.forcePath);
+	});
 };
 
 var createWriteStreamUnique = function(file, options) {
