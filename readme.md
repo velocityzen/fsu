@@ -40,7 +40,7 @@ var stream = fsu.createWriteStreamUnique("text{_###}.txt");
 Add `force = true` to options, and it will recursively create directories if they are not exist.
 
 ## pattern
-You must use `{#}` pattern in filename and path. All `#` characters will be change with counter for existing files. Number of `#` means padding for unique counter
+You must use `{#}` pattern in filename and path. All `#` characters will be change with counter for existing files. Number of `#` means padding for unique counter. **With no pattern in the filename works as usual 'fs' module.**
 
 If we run second example several times filenames will be
 ```

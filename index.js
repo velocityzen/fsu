@@ -51,18 +51,18 @@ var mkdirp = function(p, mode, cb) {
 	});
 };
 
-var openUniqueHandler = function(tryNum, fileParts, mode, cb, force) {
-	var file = tryNum ? (fileParts.head + fileParts.padLeft + padNum(tryNum, fileParts.pad) + fileParts.padRight + fileParts.tail) : (fileParts.head + fileParts.tail);
+var openUniqueHandler = function(tryNum, fileParts, mode, force, simple, cb) {
+	var file = simple ? fileParts.tail : tryNum ? (fileParts.head + fileParts.padLeft + padNum(tryNum, fileParts.pad) + fileParts.padRight + fileParts.tail) : (fileParts.head + fileParts.tail);
 
 	fs.open(path.join(fileParts.path, file), "wx", mode || defaultMode, function(err, fd) {
-		if(err && err.code === "EEXIST") {
-			openUniqueHandler(++tryNum, fileParts, mode, cb);
+		if(err && err.code === "EEXIST" && !simple) {
+			openUniqueHandler(++tryNum, fileParts, mode, force, simple, cb);
 		} else if(err && err.code === "ENOENT" && force) {
 			mkdirp(fileParts.path, mode, function(er) {
 				if(er) {
 					cb(er);
 				} else {
-					openUniqueHandler(tryNum, fileParts, mode, cb);
+					openUniqueHandler(tryNum, fileParts, mode, force, simple, cb);
 				}
 			});
 		} else {
@@ -71,33 +71,33 @@ var openUniqueHandler = function(tryNum, fileParts, mode, cb, force) {
 	});
 };
 
-var openUnique = function(filename, mode, cb, force) {
+var openUnique = function(file, mode, cb, force) {
 	if(cb === undefined) {
 		cb = mode;
 		mode = defaultMode;
 	}
 
-	filename = path.resolve(filename);
-	var filePath = path.dirname(filename);
-	filename = path.basename(filename);
+	file = path.resolve(file);
+	var filePath = path.dirname(file),
+		fileName = path.basename(file);
 
-	var fileParts = rx.exec(filename);
+	var fileParts = rx.exec(fileName);
+
 	if(!fileParts) {
-		cb(new Error("Can't find a counter pattern in filename"));
-	}
-
-	openUniqueHandler(0, {
+		openUniqueHandler(0, {
 			path: filePath,
-			head: fileParts[1],
+			tail: fileName
+		}, mode, force, true, cb);
+	} else {
+		openUniqueHandler(0, {
+			path: filePath,
+			head: fileParts[1] || "",
 			padLeft: fileParts[2],
 			pad: fileParts[3].length,
 			padRight: fileParts[4],
-			tail: fileParts[5]
-		},
-		mode,
-		cb,
-		force
-	);
+			tail: fileParts[5] || ""
+		}, mode, force, false, cb);
+	}
 };
 
 var writeFileUnique = function(filename, data, options, cb) {
