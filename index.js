@@ -1,14 +1,14 @@
 "use strict";
-var fs = require('fs');
-var util = require('util');
+var fs = require("fs");
+var inherits = require("util").inherits;
 var WriteStream = fs.WriteStream;
 
 var rx = /(.+)\{([^#\{\}]*)(#+)([^#\{\}]*)\}(.+)/;
 
 var padNum = function(n, width, z) {
-  z = z || '0';
-  n = n + '';
-  return n.length >= width ? n : new Array(width - n.length + 1).join(z) + n;
+	z = z || "0";
+	n = n + "";
+	return n.length >= width ? n : new Array(width - n.length + 1).join(z) + n;
 };
 
 var writeAll = function(fd, buffer, offset, length, position, cb) {
@@ -34,7 +34,7 @@ var openUniqueHandler = function(tryNum, head, padLeft, pad, padRight, tail, mod
 	var file = tryNum ? (head + padLeft + padNum(tryNum, pad) + padRight + tail) : (head + tail);
 
 	fs.open(file, "wx", mode || 438, function(err, fd) {
-		if(err && err.errno === 47) {
+		if(err && err.code === "EEXIST") {
 			openUniqueHandler(++tryNum, head, padLeft, pad, padRight, tail, mode, cb);
 		} else {
 			cb(err, fd);
@@ -59,41 +59,44 @@ var openUnique = function(filename, mode, cb) {
 var writeFileUnique = function(filename, data, options, cb) {
 	if(cb === undefined) {
 		cb = options;
-		options = { encoding: 'utf8', mode: 438 /*=0666*/ };
+		options = { encoding: "utf8", mode: 438 /*=0666*/ };
 	}
 
 	openUnique(filename, options.mode, function(err, fd) {
-		var buffer = Buffer.isBuffer(data) ? data : new Buffer('' + data, options.encoding || 'utf8');
-		writeAll(fd, buffer, 0, buffer.length, 0, cb);
+		if(err) {
+			cb(err);
+		} else {
+			var buffer = Buffer.isBuffer(data) ? data : new Buffer("" + data, options.encoding || "utf8");
+			writeAll(fd, buffer, 0, buffer.length, 0, cb);
+		}
 	});
 };
 
 // stream
-var UniqueWriteStream = function(path, options) {
+var WriteStreamUnique = function(path, options) {
 	WriteStream.call(this, path, options);
 };
-util.inherits(UniqueWriteStream, WriteStream);
+inherits(WriteStreamUnique, WriteStream);
 
-UniqueWriteStream.prototype.open = function() {
+WriteStreamUnique.prototype.open = function() {
 	openUnique(this.path, this.mode, function(err, fd) {
 		if (err) {
 			this.destroy();
-			this.emit('error', err);
+			this.emit("error", err);
 			return;
 		}
 
 		this.fd = fd;
-		this.emit('open', fd);
+		this.emit("open", fd);
 	}.bind(this));
 };
 
-var createUniqueWriteStream = function(path, options) {
-	return new UniqueWriteStream(path, options);
+var createWriteStreamUnique = function(path, options) {
+	return new WriteStreamUnique(path, options);
 };
 
 module.exports = {
 	openUnique: openUnique,
 	writeFileUnique: writeFileUnique,
-	createUniqueWriteStream: createUniqueWriteStream
+	createWriteStreamUnique: createWriteStreamUnique
 };
-
