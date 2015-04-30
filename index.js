@@ -54,8 +54,9 @@ var mkdirp = function(p, mode, cb) {
 
 var openUniqueHandler = function(tryNum, fileParts, options, cb) {
 	var file = options.simple ? fileParts.tail : tryNum ? (fileParts.head + fileParts.padLeft + padNum(tryNum, fileParts.pad) + fileParts.padRight + fileParts.tail) : (fileParts.head + fileParts.tail);
+	var newPath = path.join(fileParts.path, file);
 
-	fs.open(path.join(fileParts.path, file), options.flags || "w", options.mode || defaultFileMode, function(err, fd) {
+	fs.open(newPath, options.flags || "w", options.mode || defaultFileMode, function(err, fd) {
 		if(err && err.code === "EEXIST" && !options.simple) {
 			openUniqueHandler(++tryNum, fileParts, options, cb);
 		} else if(err && err.code === "ENOENT" && options.force) {
@@ -67,7 +68,7 @@ var openUniqueHandler = function(tryNum, fileParts, options, cb) {
 				}
 			});
 		} else {
-			cb(err, fd);
+			cb(err, fd, newPath);
 		}
 	});
 };
@@ -132,13 +133,13 @@ WriteStreamUnique.prototype.open = function() {
 		flags: this.flags,
 		mode: this.mode,
 		force: this.force
-	}, function(err, fd) {
+	}, function(err, fd, newPath) {
 		if (err) {
 			self.destroy();
 			self.emit("error", err);
 			return;
 		}
-
+		self.path = newPath;
 		self.fd = fd;
 		self.emit("open", fd);
 	});
