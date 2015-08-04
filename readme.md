@@ -1,9 +1,9 @@
-#fsu (fs unique)
+# fsu (fs unique)
 Unique filenames with streams support
 
 **Checking if a file exists before opening is an anti-pattern that leaves you vulnerable to race conditions: another process can remove the file between the calls to fs.exists() and fs.open(). This functions doesn't use fs.exists functionality. If file doesn't exist this will work like usual fs module methods**
 
-##Instalation
+## Instalation
 `npm install fsu`
 
 ## openUnique(path, [mode], callback)

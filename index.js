@@ -4,7 +4,7 @@ var path = require("path");
 var inherits = require("util").inherits;
 var WriteStream = fs.WriteStream;
 
-var rx = /(.*)\{([^#\{\}]*)(#+)([^#\{\}]*)\}(.*)/;
+var rxFileParts = /(.*)\{([^#\{\}]*)(#+)([^#\{\}]*)\}(.*)/;
 
 var defaultDirMode = parseInt("0777", 8) & (~process.umask());
 var defaultFileMode = parseInt("0666", 8) & (~process.umask());
@@ -78,7 +78,7 @@ var openUnique = function(file, options, cb) {
 	var filePath = path.dirname(file),
 		fileName = path.basename(file);
 
-	var fileParts = rx.exec(fileName);
+	var fileParts = rxFileParts.exec(fileName);
 
 	if(!fileParts) {
 		options.simple = true;
