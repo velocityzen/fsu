@@ -1,18 +1,25 @@
 {
-	"name": "fsu",
-	"version": "0.2.1",
-	"description": "Unique file name with streams support",
-	"license" : "MIT",
-	"keywords": ["file", "fs", "unique", "counter", "filename", "stream"],
-	"author": "Alexey Novikov (http://2dubs.com)",
-	"private": false,
-	"engines": {
-		"node": ">0.10.0",
-		"iojs": ">1.0.0"
-	},
-	"repository": {
-		"type": "git",
-		"url": "git@github.com:velocityzen/fsu.git"
-	},
-	"main": "./index"
+  "name": "fsu",
+  "version": "0.2.2",
+  "description": "Unique file name with streams support",
+  "license": "MIT",
+  "keywords": [
+    "file",
+    "fs",
+    "unique",
+    "counter",
+    "filename",
+    "stream"
+  ],
+  "author": "Alexey Novikov (http://2dubs.com)",
+  "private": false,
+  "engines": {
+    "node": ">0.10.0",
+    "iojs": ">1.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:velocityzen/fsu.git"
+  },
+  "main": "./index"
 }
