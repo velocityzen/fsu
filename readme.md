@@ -12,7 +12,7 @@ Same as [fs.open](http://nodejs.org/api/fs.html#fs_fs_open_path_flags_mode_callb
 ```js
 var fsu = require('fsu');
 
-fsu.openUnique("text{_###}.txt", function(err, fd) {
+fsu.openUnique("text{_###}.txt", (err, fd) => {
     //now we can use file descriptor as usual
 });
 ```
@@ -23,7 +23,7 @@ Same as [fs.writeFile](http://nodejs.org/api/fs.html#fs_fs_writefile_filename_da
 ```js
 var fsu = require('fsu');
 
-fsu.writeFileUnique("text{_###}.txt", "test", function(err) {
+fsu.writeFileUnique("text{_###}.txt", "test", err => {
     console.log("Done");
 });
 ```
