@@ -108,12 +108,12 @@ let writeFileUnique = function(filename, data, options, cb) {
     };
   }
 
-  openUnique(filename, options, (err, fd) => {
+  openUnique(filename, options, (err, fd, newPath) => {
     if (err) {
       cb(err);
     } else {
       let buffer = Buffer.isBuffer(data) ? data : new Buffer('' + data, options.encoding || 'utf8');
-      writeAll(fd, buffer, 0, buffer.length, 0, cb);
+      writeAll(fd, buffer, 0, buffer.length, 0, (...args) => cb.apply(null, args.concat(newPath)));
     }
   });
 };

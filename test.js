@@ -4,9 +4,8 @@ const fsu = require('./index.js');
 
 let stream = fsu.createWriteStreamUnique('test{_stream###}.txt');
 
-fsu.writeFileUnique('test/test{_file###}.txt', 'test', { force: true }, err => {
+fsu.writeFileUnique('test/test{_file###}.txt', 'test', { force: true }, (err, path) => {
   if (err) {
-    console.log(err);
   } else {
     fs.createReadStream('readme.md').pipe(stream);
   }

@@ -10,9 +10,9 @@ Unique filenames with streams support
 Same as [fs.open](http://nodejs.org/api/fs.html#fs_fs_open_path_flags_mode_callback) but open for writing and creates unique filename.
 
 ```js
-var fsu = require('fsu');
+const fsu = require('fsu');
 
-fsu.openUnique("text{_###}.txt", (err, fd) => {
+fsu.openUnique("text{_###}.txt", (err, fd, path) => {
     //now we can use file descriptor as usual
 });
 ```
@@ -21,10 +21,10 @@ fsu.openUnique("text{_###}.txt", (err, fd) => {
 Same as [fs.writeFile](http://nodejs.org/api/fs.html#fs_fs_writefile_filename_data_options_callback) but creates unique filename.
 
 ```js
-var fsu = require('fsu');
+const fsu = require('fsu');
 
-fsu.writeFileUnique("text{_###}.txt", "test", err => {
-    console.log("Done");
+fsu.writeFileUnique("text{_###}.txt", "test", (err, path) => {
+    console.log("Done", path);
 });
 ```
 
@@ -32,9 +32,12 @@ fsu.writeFileUnique("text{_###}.txt", "test", err => {
 Same as [fs.createWriteStream](https://nodejs.org/api/fs.html#fs_fs_createwritestream_path_options) but returns writable stream for unique file.
 
 ```js
-var fsu = require('fsu');
-var stream = fsu.createWriteStreamUnique("text{_###}.txt");
+const fsu = require('fsu');
+let stream = fsu.createWriteStreamUnique("text{_###}.txt");
 ```
+
+## new path
+Stream has a `path` property that contains a new path
 
 ## force path creation
 Add `force = true` to options, and it will recursively create directories if they are not exist.
