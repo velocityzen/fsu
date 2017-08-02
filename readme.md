@@ -1,4 +1,8 @@
 # fsu (fs unique)
+
+[![NPM Version](https://img.shields.io/npm/v/fsu.svg?style=flat-square)](https://www.npmjs.com/package/fsu)
+[![NPM Downloads](https://img.shields.io/npm/dt/fsu.svg?style=flat-square)](https://www.npmjs.com/package/fsu)
+
 Unique filenames with streams support
 
 **Checking if a file exists before opening is an anti-pattern that leaves you vulnerable to race conditions: another process can remove the file between the calls to fs.exists() and fs.open(). This functions doesn't use fs.exists functionality. If file doesn't exist this will work like usual fs module methods**
