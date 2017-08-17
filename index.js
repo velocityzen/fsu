@@ -9,13 +9,13 @@ let rxFileParts = /(.*)\{([^#\{\}]*)(#+)([^#\{\}]*)\}(.*)/;
 const defaultDirMode = parseInt('0777', 8) & (~process.umask());
 const defaultFileMode = parseInt('0666', 8) & (~process.umask());
 
-let padNum = function(n, width, z) {
+const padNum = function(n, width, z) {
   z = z || '0';
   n = n + '';
   return n.length >= width ? n : new Array(width - n.length + 1).join(z) + n;
 };
 
-let writeAll = function(fd, buffer, offset, length, position, cb) {
+const writeAll = function(fd, buffer, offset, length, position, cb) {
   fs.write(fd, buffer, offset, length, position, (writeErr, written) => {
     if (writeErr) {
       fs.close(fd, () => cb(writeErr));
@@ -30,7 +30,7 @@ let writeAll = function(fd, buffer, offset, length, position, cb) {
   });
 };
 
-let mkdirp = function(p, mode, cb) {
+const mkdirp = function(p, mode, cb) {
   fs.mkdir(p, mode, err => {
     if (!err) {
       cb();
@@ -50,9 +50,9 @@ let mkdirp = function(p, mode, cb) {
   });
 };
 
-let openUniqueHandler = function(tryNum, fileParts, options, cb) {
-  let file = options.simple ? fileParts.tail : tryNum ? (fileParts.head + fileParts.padLeft + padNum(tryNum, fileParts.pad) + fileParts.padRight + fileParts.tail) : (fileParts.head + fileParts.tail);
-  let newPath = path.join(fileParts.path, file);
+const openUniqueHandler = function(tryNum, fileParts, options, cb) {
+  const file = options.simple ? fileParts.tail : tryNum ? (fileParts.head + fileParts.padLeft + padNum(tryNum, fileParts.pad) + fileParts.padRight + fileParts.tail) : (fileParts.head + fileParts.tail);
+  const newPath = path.join(fileParts.path, file);
 
   fs.open(newPath, options.flags || 'w', options.mode || defaultFileMode, (err, fd) => {
     if (err && err.code === 'EEXIST' && !options.simple) {
@@ -71,12 +71,12 @@ let openUniqueHandler = function(tryNum, fileParts, options, cb) {
   });
 };
 
-let openUnique = function(file, options, cb) {
+const openUnique = function(file, options, cb) {
   file = path.resolve(file);
-  let filePath = path.dirname(file);
-  let fileName = path.basename(file);
+  const filePath = path.dirname(file);
+  const fileName = path.basename(file);
 
-  let fileParts = rxFileParts.exec(fileName);
+  const fileParts = rxFileParts.exec(fileName);
 
   if (!fileParts) {
     options.simple = true;
@@ -98,7 +98,7 @@ let openUnique = function(file, options, cb) {
   }
 };
 
-let writeFileUnique = function(filename, data, options, cb) {
+const writeFileUnique = function(filename, data, options, cb) {
   if (cb === undefined) {
     cb = options;
     options = {
@@ -112,9 +112,9 @@ let writeFileUnique = function(filename, data, options, cb) {
     if (err) {
       cb(err);
     } else {
-      let buffer = Buffer.isBuffer(data) ? data : new Buffer('' + data, options.encoding || 'utf8');
+      const buffer = Buffer.isBuffer(data) ? data : new Buffer('' + data, options.encoding || 'utf8');
       writeAll(fd, buffer, 0, buffer.length, 0, function() {
-        let args = Array.prototype.slice.call(arguments);
+        const args = Array.prototype.slice.call(arguments);
         cb.apply(null, args.concat(newPath));
       });
     }
@@ -122,7 +122,7 @@ let writeFileUnique = function(filename, data, options, cb) {
 };
 
 // stream
-let WriteStreamUnique = function(file, options) {
+const WriteStreamUnique = function(file, options) {
   if (options && options.force) {
     this.force = options.force;
     delete options.force;
@@ -148,12 +148,13 @@ WriteStreamUnique.prototype.open = function() {
   });
 };
 
-let createWriteStreamUnique = function(file, options) {
+const createWriteStreamUnique = function(file, options) {
   return new WriteStreamUnique(file, options);
 };
 
 module.exports = {
-  openUnique: openUnique,
-  writeFileUnique: writeFileUnique,
-  createWriteStreamUnique: createWriteStreamUnique
+  openUnique,
+  writeFileUnique,
+  WriteStreamUnique,
+  createWriteStreamUnique
 };
