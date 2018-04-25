@@ -4,14 +4,14 @@ const path = require('path');
 const inherits = require('util').inherits;
 const WriteStream = fs.WriteStream;
 
-let rxFileParts = /(.*)\{([^#\{\}]*)(#+)([^#\{\}]*)\}(.*)/;
+const rxFileParts = /(.*)\{([^#{}]*)(#+)([^#{}]*)\}(.*)/;
 
 const defaultDirMode = parseInt('0777', 8) & (~process.umask());
 const defaultFileMode = parseInt('0666', 8) & (~process.umask());
 
 const padNum = function(n, width, z) {
   z = z || '0';
-  n = n + '';
+  n += '';
   return n.length >= width ? n : new Array(width - n.length + 1).join(z) + n;
 };
 
@@ -112,10 +112,10 @@ const writeFileUnique = function(filename, data, options, cb) {
     if (err) {
       cb(err);
     } else {
-      const buffer = Buffer.isBuffer(data) ? data : new Buffer('' + data, options.encoding || 'utf8');
-      writeAll(fd, buffer, 0, buffer.length, 0, function() {
-        const args = Array.prototype.slice.call(arguments);
-        cb.apply(null, args.concat(newPath));
+      const buffer = Buffer.isBuffer(data) ? data : Buffer.from(String(data), options.encoding || 'utf8');
+      writeAll(fd, buffer, 0, buffer.length, 0, (...args) => {
+        args[1] = newPath;
+        cb.apply(null, args);
       });
     }
   });

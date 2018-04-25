@@ -19,10 +19,17 @@
   "license": "MIT",
   "main": "./index",
   "name": "fsu",
-  "private": false,
   "repository": {
     "type": "git",
     "url": "git+ssh://git@github.com/velocityzen/fsu.git"
   },
-  "version": "1.0.4"
+  "version": "1.0.4",
+  "devDependencies": {
+    "ava": "^0.25.0",
+    "del": "^3.0.0",
+    "nyc": "^11.7.1"
+  },
+  "scripts": {
+    "test": "nyc ava"
+  }
 }
