@@ -113,10 +113,7 @@ const writeFileUnique = function(filename, data, options, cb) {
       cb(err);
     } else {
       const buffer = Buffer.isBuffer(data) ? data : Buffer.from(String(data), options.encoding || 'utf8');
-      writeAll(fd, buffer, 0, buffer.length, 0, (...args) => {
-        args[1] = newPath;
-        cb.apply(null, args);
-      });
+      writeAll(fd, buffer, 0, buffer.length, 0, err => cb(err, newPath));
     }
   });
 };
