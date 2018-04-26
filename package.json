@@ -23,7 +23,7 @@
     "type": "git",
     "url": "git+ssh://git@github.com/velocityzen/fsu.git"
   },
-  "version": "1.1.0",
+  "version": "1.1.1",
   "devDependencies": {
     "ava": "^0.25.0",
     "del": "^3.0.0",
