@@ -10,26 +10,24 @@ Unique filenames with streams support
 ## Instalation
 `npm install fsu`
 
-## openUnique(path, [mode], callback)
+## async openUnique(path, [mode])
 Same as [fs.open](http://nodejs.org/api/fs.html#fs_fs_open_path_flags_mode_callback) but open for writing and creates unique filename.
 
 ```js
 const fsu = require('fsu');
 
-fsu.openUnique("text{_###}.txt", (err, fd, path) => {
-    //now we can use file descriptor as usual
-});
+const { fd, path } = await fsu.openUnique("text{_###}.txt", [options]);
+
 ```
 
-## writeFileUnique(path, data, [options], callback)
+## async writeFileUnique(path, data, [options])
 Same as [fs.writeFile](http://nodejs.org/api/fs.html#fs_fs_writefile_filename_data_options_callback) but creates unique filename.
 
 ```js
 const fsu = require('fsu');
 
-fsu.writeFileUnique("text{_###}.txt", "test", (err, path) => {
-    console.log("Done", path);
-});
+const path = await fsu.writeFileUnique("text{_###}.txt", "test");
+
 ```
 
 ## createWriteStreamUnique(path, [options])
