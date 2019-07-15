@@ -16,7 +16,7 @@ Same as [fs.open](http://nodejs.org/api/fs.html#fs_fs_open_path_flags_mode_callb
 ```js
 const fsu = require('fsu');
 
-const { fd, path } = await fsu.openUnique("text{_###}.txt", [options]);
+const { fd, path } = await fsu.openUnique("text{_###}.txt");
 
 ```
 
