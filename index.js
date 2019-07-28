@@ -109,20 +109,22 @@ function WriteStreamUnique(file, options = {}) {
 }
 inherits(WriteStreamUnique, WriteStream);
 
-WriteStreamUnique.prototype.open = async function() {
-  try {
-    const { fd, path } = await openUnique(this.path, {
-      flags: this.flags,
-      mode: this.mode,
-      force: this.force
-    });
+WriteStreamUnique.prototype.open = function() {
+  openUnique(this.path, {
+    flags: this.flags,
+    mode: this.mode,
+    force: this.force
+  }).then(({ fd, path }) => {
     this.path = path;
     this.fd = fd;
     this.emit('open', this.fd);
-  } catch (e) {
-    this.destroy();
+    this.emit('ready');
+  }).catch(e => {
+    if (this.autoClose) {
+      this.destroy();
+    }
     this.emit('error', e);
-  }
+  })
 }
 
 const createWriteStreamUnique = (file, options) => new WriteStreamUnique(file, options);
